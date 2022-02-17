@@ -112,7 +112,7 @@ try_sysmap(char *name, char *path)
 	FILE *f;
 	unsigned long addr;
 	char dummy, sname[512];
-	int ret = 0, oldstyle = 0;
+	int ret = 0;
 	struct utsname ver;
 
 	f = fopen(path, "r");
@@ -121,30 +121,9 @@ try_sysmap(char *name, char *path)
 	}
 
 	uname(&ver);
-	if (strncmp(ver.release, "2.6", 3)) {
-		oldstyle = 1;
-	}
 
 	while (ret != EOF) {
-		if (!oldstyle) {
-			ret = fscanf(f, "%p %c %s\n", (void **) &addr, &dummy, sname);
-		} else {
-			ret = fscanf(f, "%p %s\n", (void **) &addr, sname);
-			if (ret == 2) {
-				char *p;
-				if (strstr(sname, "_O/") || strstr(sname, "_S.")) {
-					continue;
-				}
-				p = strrchr(sname, '_');
-				if (p > ((char *) sname + 5) && !strncmp(p - 3, "smp", 3)) {
-					p = p - 4;
-					while (p > (char *) sname && *(p - 1) == '_') {
-						p--;
-					}
-					*p = '\0';
-				}
-			}
-		}
+		ret = fscanf(f, "%p %c %s\n", (void **) &addr, &dummy, sname);
 		if (ret == 0) {
 			fscanf(f, "%s\n", sname);
 			continue;
