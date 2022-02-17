@@ -47,7 +47,7 @@ impl Symbol {
     if parts.len() < 3 {
       None
     } else {
-      let address: u64 = if let Ok(address) = parts[0].parse() {
+      let address: u64 = if let Ok(address) = u64::from_str_radix(parts[0], 16) {
         address
       } else {
         return None;
