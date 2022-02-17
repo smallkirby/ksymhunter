@@ -388,6 +388,11 @@ ksymhunter(char *name)
 	return 0;
 }
 
+int amiRoot(void) {
+  uid_t euid = geteuid();
+	return euid == 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -396,6 +401,11 @@ main(int argc, char *argv[])
 
 	if (argc < 2) {
 		printf("usage: %s symbol_name\n", argv[0]);
+		exit(1);
+	}
+
+	if (!amiRoot()) {
+		puts("[-] ksymhunter requires root priviledge.");
 		exit(1);
 	}
 
