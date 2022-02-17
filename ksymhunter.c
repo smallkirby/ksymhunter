@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
@@ -55,6 +56,21 @@ unsigned long try_remote(char *name, char *path);
 
 #define REMOTE_HOST "kernelvulns.org"
 #define REMOTE_PORT "80"
+
+int VERBOSE = 0;
+
+void v_printf(char *fmt, ...) {
+  if (VERBOSE == 1) {
+    va_list va;
+    va_start(va, fmt);
+    vprintf(fmt, va);
+    va_end(va);
+  }
+}
+
+void v_puts(char *s) {
+  v_printf(s);
+}
 
 struct source {
 	int args;
@@ -144,7 +160,7 @@ try_vmlinux(char *name, char *path)
 	char cmd[512];
 	char *tmpfile = ".sysmap";
 	unsigned long addr;
-	
+
 	snprintf(cmd, sizeof(cmd), "nm %s &> %s", path, tmpfile);
 	system(cmd);
 	addr = try_sysmap(name, tmpfile);
@@ -359,7 +375,7 @@ ksymhunter(char *name)
 
 		addr = source->fp(name, path);
 		if (addr) {
-			printf("[+] resolved %s using %s\n", name, path);
+			v_printf("[+] resolved %s using %s\n", name, path);
 			return addr;
 		}
 	}
@@ -390,7 +406,7 @@ main(int argc, char *argv[])
 
 	symbol = argv[1];
 
-	printf("[+] trying to resolve %s...\n", symbol);
+	v_printf("[+] trying to resolve %s...\n", symbol);
 
 	addr = ksymhunter(symbol);
 	if (!addr) {
@@ -398,7 +414,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("[+] resolved %s to 0x%lx\n", symbol, addr);
+	printf("0x%lx\n", addr);
 
 	return 0;
 }
