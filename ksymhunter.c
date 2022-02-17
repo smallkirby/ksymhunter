@@ -58,6 +58,7 @@ unsigned long try_remote(char *name, char *path);
 #define REMOTE_PORT "80"
 
 int VERBOSE = 0;
+int MULTI_SOURCE = 0;
 
 void v_printf(char *fmt, ...) {
   if (VERBOSE == 1) {
@@ -362,6 +363,9 @@ ksymhunter(char *name)
 	uname(&ver);
 
 	count = sizeof(sources) / sizeof(struct source);
+	if (MULTI_SOURCE == 0) {
+		count = 1;
+	}
 	for (i = 0; i < count; ++i) {
 		source = &sources[i];
 
@@ -406,11 +410,19 @@ main(int argc, char *argv[])
 
 	symbol = argv[1];
 
+	for (int ix = 0; ix != argc; ++ix) {
+		if (strncmp(argv[ix], "-m", 2) == 0) {
+			MULTI_SOURCE = 1;
+			v_puts("[.] enabled multi source search.");
+			break;
+		}
+	}
+
 	v_printf("[+] trying to resolve %s...\n", symbol);
 
 	addr = ksymhunter(symbol);
 	if (!addr) {
-		printf("[-] failed to resolve %s\n", symbol);
+		v_printf("[-] failed to resolve %s\n", symbol);
 		exit(1);
 	}
 
