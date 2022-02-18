@@ -1,7 +1,6 @@
-use super::source::{Resolver, SourceError};
+use super::source::{Resolver, SourceError, Symbol};
 
-use glob::glob;
-use std::{fs::read_to_string, path::Path, path::PathBuf};
+use std::{fs::read_to_string, path::Path};
 
 pub struct SysmapSource {
   pub sfiles: Vec<String>, // sysmap source filename
@@ -27,6 +26,13 @@ impl Resolver for SysmapSource {
 }
 
 impl SysmapSource {
+  pub fn from_array(sfiles: Vec<&str>) -> Vec<Self> {
+    fn resolver_mapper(source: &str) -> Option<SysmapSource> {
+      SysmapSource::new(source).ok()
+    }
+    sfiles.into_iter().filter_map(resolver_mapper).collect()
+  }
+
   pub fn new(sfile: &str) -> Result<Self, SourceError> {
     let sfiles = if sfile.contains('*') {
       glob::glob(sfile)
@@ -45,30 +51,5 @@ impl SysmapSource {
     };
 
     Ok(SysmapSource { sfiles })
-  }
-}
-
-struct Symbol {
-  pub address: u64,
-  pub name: String,
-  pub c: char,
-}
-
-impl Symbol {
-  pub fn from(line: &str) -> Option<Self> {
-    let parts: Vec<&str> = line.split(' ').collect();
-    if parts.len() < 3 {
-      None
-    } else {
-      let address: u64 = if let Ok(address) = u64::from_str_radix(parts[0], 16) {
-        address
-      } else {
-        return None;
-      };
-      let c = parts[1].chars().nth(0).unwrap();
-      let name: String = parts[2].into();
-
-      Some(Self { address, name, c })
-    }
   }
 }
