@@ -34,15 +34,34 @@ use clap::Parser;
 fn main() {
   let args = Args::parse();
 
-  let sources: Vec<Box<dyn Resolver>> =
-    vec![Box::new(SysmapSource::new("/proc/kallsyms").unwrap())];
+  fn resolver_mapper(source: &str) -> Option<Box<dyn Resolver>> {
+    Some(Box::new(SysmapSource::new(source).ok()?))
+  }
+
+  let sources: Vec<Box<dyn Resolver>> = vec![
+    "/proc/kallsyms",
+    "/proc/ksyms",
+    "/boot/System.map-*",
+    "/boot/System.map-genkernel-*",
+    "/usr/src/linux-%s/System.map",
+    "/lib/modules/%s/System.map",
+    "/boot/System.map",
+    "/System.map",
+    "/usr/src/linux/System.map",
+  ]
+  .into_iter()
+  .filter_map(resolver_mapper)
+  .collect();
 
   for source in sources {
     let result = match source.resolve(&args.symbol) {
       Ok(result) => result,
       Err(err) => {
-        eprintln!("{:?}", err);
-        std::process::exit(1);
+        // just ignore error and continue to next source
+        if args.verbose {
+          eprintln!("{:?}", err);
+        }
+        continue;
       }
     };
     if let Some(address) = result {
